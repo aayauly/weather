@@ -6,7 +6,7 @@
   "engines": { "node": ">=20.0.0" },
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/prepare-sites-build.mjs",
     "preview": "vite preview",
     "typecheck": "vue-tsc --noEmit"
   },
