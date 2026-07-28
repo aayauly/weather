@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { RouterLink } from 'vue-router'
+import { useAuth } from '@/composables/useAuth'
 import type { Unit } from '@/types/weather'
 defineProps<{ theme: string; unit: Unit }>()
 const emit = defineEmits<{ search: [city: string]; locate: []; toggleTheme: []; setUnit: [unit: Unit] }>()
 const query = ref('')
+const { user } = useAuth()
 let timer: ReturnType<typeof setTimeout>
 const submit = () => { if (query.value.trim()) emit('search', query.value.trim()) }
 const suggest = () => { clearTimeout(timer); timer = setTimeout(() => undefined, 350) }
@@ -23,6 +26,11 @@ const suggest = () => { clearTimeout(timer); timer = setTimeout(() => undefined,
         <button :class="{ active: unit === 'f' }" @click="$emit('setUnit', 'f')">°F</button>
       </div>
       <button class="icon-btn" :aria-label="theme === 'dark' ? 'Use light mode' : 'Use dark mode'" @click="$emit('toggleTheme')">{{ theme === 'dark' ? '☼' : '☾' }}</button>
+      <RouterLink v-if="user" class="account-link" to="/profile" aria-label="Open profile">
+        <img v-if="user.avatarUrl" :src="user.avatarUrl" alt="" />
+        <span v-else>{{ user.name.slice(0, 1).toUpperCase() }}</span>
+      </RouterLink>
+      <RouterLink v-else class="signin-link" to="/login">Sign in</RouterLink>
     </div>
   </header>
 </template>
