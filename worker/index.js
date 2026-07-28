@@ -47,6 +47,17 @@ const sameOrigin = request => {
   const origin = request.headers.get('origin')
   return !origin || origin === new URL(request.url).origin
 }
+const serveAsset = pathname => {
+  const key = pathname === '/' ? '/index.html' : pathname
+  const asset = EMBEDDED_ASSETS[key]
+  if (!asset) return null
+  return new Response(asset.body, {
+    headers: {
+      'content-type': asset.type,
+      'cache-control': key === '/index.html' ? 'no-cache' : 'public, max-age=31536000, immutable',
+    },
+  })
+}
 
 async function api(request, env, url) {
   if (!sameOrigin(request)) return json({ error: 'Request origin is not allowed.' }, 403)
@@ -129,10 +140,10 @@ export default {
     const url = new URL(request.url)
     try {
       if (url.pathname.startsWith('/api/')) return await api(request, env, url)
-      const response = await env.ASSETS.fetch(request)
-      if (response.status !== 404) return response
-      url.pathname = '/index.html'
-      return env.ASSETS.fetch(new Request(url, request))
+      const asset = serveAsset(url.pathname)
+      if (asset) return asset
+      if (request.method === 'GET' && request.headers.get('accept')?.includes('text/html')) return serveAsset('/index.html')
+      return new Response('Not found', { status: 404 })
     } catch (error) {
       console.error(error)
       return json({ error: 'The service is temporarily unavailable.' }, 500)
